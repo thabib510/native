@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+
+	<!-- argument that defines the port that will be used to interface with the P3-DX from our laptop -->
+	<arg name="port_val" default="/dev/ttyUSB0"/>
+
+	<!-- cmd_vel param to direct the topic name for our movement msgs -->
+	<param name="cmd_vel_topic" value="/RosAria/cmd_vel"/>
+
+
+
+	<!-- Interface with the P3-DX -->
+	<node name="RosAria" pkg="rosaria" type="RosAria" required="true">
+		<param name="port" value="$(arg port_val)"/>
+	</node>
+
+
+
+	<!-- Control the P3DX model with the ARC -->
+	<node name="p3dx_mover" type="mover.py" pkg="native" output="screen" required="true"/>
+
+
+
+	<!-- P3-DX Model TF Description -->
+	<param name="robot_description" command="$(find xacro)/xacro.py '$(find native)/urdf/p3dx_real.xacro'" />	
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint 100"/>
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+		<param name="publish_frequency" type="double" value="30.0" />
+	</node>
+
+
+
+	<!-- Load the URDF of the P3DX with a Kinect into the ROS Parameter Server -->
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_base_footprint" args="0 0 0 0 0 0          base_link base_footprint 50"/>
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_center_wheel"   args="-0.2 0 0.036 0 0 0   base_link center_wheel 50"/>
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_swivel"         args="-0.178 0 0.052 0 0 0 base_link swivel 50"/>
+
+	<!-- Publish joint states for rviz to access -->
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find native)/config/real_rosaria.rviz" />
+
+
+</launch>

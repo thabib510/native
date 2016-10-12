@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+
+	<!-- This line of code calls openni.launch file that turns on the Kinect and makes it publish all of its nodes -->
+	<include file="$(find openni_launch)/launch/openni.launch" >
+		<arg name="depth_registration" value="true"/>
+	</include>
+
+
+
+	<!-- Kinect cloud to laser scan -->
+	<node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
+		<param name="scan_height" value="60"/>
+		<param name="output_frame_id" value="/camera_depth_frame"/>
+		<param name="range_min" value="0.45"/>
+		<param name="range_max" value="4.0"/>
+
+		<remap from="image" to="/camera/depth_registered/image_raw"/>
+		<remap from="scan" to="/scan"/>
+	</node>
+
+
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find native)/config/kinect_scan.rviz"/>
+
+
+
+</launch>

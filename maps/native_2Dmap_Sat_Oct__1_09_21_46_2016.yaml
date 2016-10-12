@@ -1,0 +1,7 @@
+image: native_2Dmap_Sat_Oct__1_09_21_46_2016.pgm
+resolution: 0.050000
+origin: [-27.914810, -18.523754, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+

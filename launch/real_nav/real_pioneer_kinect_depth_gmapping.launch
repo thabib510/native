@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+
+	<arg name="HOME"                    default="/home/abdul"/>
+	<arg name="map_file"                default="$(find native)/maps/map.yaml"/>
+	
+	<!-- If openni.launch is changed, these topic names may also need to be changed -->
+	<arg name="rgb_topic"               default="/camera/rgb/image_rect_color" />
+	<arg name="depth_registered_topic"  default="/camera/depth_registered/image_raw" />
+	<arg name="camera_info_topic"       default="/camera/rgb/camera_info" />
+
+	<arg name="subscribe_scan"          default="false"/>
+	<arg name="subscribe_scan_cloud"    default="false"/>     
+	<arg name="scan_topic"              default="/scan"/>
+	<arg name="scan_cloud_topic"        default="/scan_cloud"/>
+	
+	<arg name="odom_topic"              default="/odom"/>
+	<arg name="visual_odometry"         default="false"/>
+
+	<!-- argument that defines the port that will be used to interface with the P3-DX from our laptop -->
+	<arg name="port_val" default="/dev/ttyUSB0"/>
+
+	<!-- cmd_vel param to direct the topic name for our movement msgs -->
+	<arg   name="cmd_vel_topic" value="/RosAria/cmd_vel"/>
+	<param name="cmd_vel_topic" value="/RosAria/cmd_vel"/>
+
+
+	<!-- P3-DX Model TF Description -->
+	<param name="robot_description" command="$(find xacro)/xacro.py '$(find native)/urdf/p3dx_real.xacro'" />	
+	<node pkg="tf" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint 100"/>
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+		<param name="publish_frequency" type="double" value="30.0" />
+	</node>
+
+
+
+	<!-- Load the URDF of the P3DX with a Kinect into the ROS Parameter Server -->
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_base_footprint" args="0 0 0 0 0 0          base_link base_footprint 50"/>
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_center_wheel"   args="-0.2 0 0.036 0 0 0   base_link center_wheel 50"/>
+	<node pkg="tf" type="static_transform_publisher" name="base_link_to_swivel"         args="-0.178 0 0.052 0 0 0 base_link swivel 50"/>
+
+	<!-- Publish joint states for rviz to access -->
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find native)/config/nav_config.rviz" />
+
+
+	<!-- Interface with the P3-DX -->
+	<node name="RosAria" pkg="rosaria" type="RosAria" required="true">
+		<param name="port" value="$(arg port_val)"/>
+		<remap from="/RosAria/pose" to="$(arg odom_topic)"/>
+	</node>
+
+
+
+	<include file="$(find openni_launch)/launch/openni.launch" >
+		<arg name="depth_registration" value="true"/>
+	</include>
+
+
+
+	<!-- Kinect cloud to laser scan -->
+	<node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
+		<param name="scan_height" value="60"/>
+		<param name="output_frame_id" value="/camera_depth_frame"/>
+		<param name="range_min" value="0.45"/>
+		<param name="range_max" value="4.0"/>
+
+		<remap from="image" to="/camera/depth_registered/image_raw"/>
+		<remap from="scan" to="/scan"/>
+	</node>
+
+
+	<!-- Run gmapping with hokuyo laser scans -->
+	<node pkg="gmapping" name="gmapping" type="slam_gmapping">
+		<remap from="scan" to="/scan"/>
+	</node>
+
+
+
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+
+		<rosparam file="$(find native)/param/costmap_common_params.yaml"      command="load" ns="global_costmap" />
+		<rosparam file="$(find native)/param/costmap_common_params.yaml"      command="load" ns="local_costmap" />
+		<rosparam file="$(find native)/param/local_costmap_params.yaml"       command="load" />
+		<rosparam file="$(find native)/param/global_costmap_params.yaml"      command="load" />
+		<rosparam file="$(find native)/param/base_local_planner_params.yaml"  command="load" />
+		<rosparam file="$(find native)/param/move_base_params.yaml"           command="load" />
+
+		<remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>
+		<remap from="odom"    to="$(arg odom_topic)"/>
+
+	</node>
+
+
+</launch>
+

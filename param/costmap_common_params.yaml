@@ -1,0 +1,13 @@
+obstacle_range: 2.5
+raytrace_range: 3.0
+robot_radius: 0.40
+inflation_radius: 0.5 
+
+
+observation_sources: laser_scan_sensor sonar_sensor
+
+# what is the sensor_frame for laser_scan_sensor?
+
+laser_scan_sensor: { data_type: LaserScan, topic: scan, marking: true, clearing: true, min_obstacle_height: 0.58, max_obstacle_height: 0.62   }
+
+sonar_sensor: { data_type: PointCloud, topic: /RosAria/sonar, marking: true, clearing: false, min_obstacle_height: 0.0, max_obstacle_height: 0.23   }

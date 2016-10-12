@@ -1,0 +1,36 @@
+<launch>
+	<arg name="HOME"                    default="/home/abdul"/>
+	<arg name="rtabmapviz_cfg"          default="-d $(find rtabmap_ros)/launch/config/rgbd_gui.ini" />
+	
+	<!-- If openni.launch is changed, these topic names may also need to be changed -->
+	<arg name="rgb_topic"               default="/camera/rgb/image_rect_color" />
+	<arg name="depth_registered_topic"  default="/camera/depth_registered/image_raw" />
+	<arg name="camera_info_topic"       default="/camera/rgb/camera_info" />
+
+	<arg name="subscribe_scan"          default="false"/>
+	<arg name="subscribe_scan_cloud"    default="false"/>     
+	<arg name="scan_topic"              default="/scan"/>
+	<arg name="scan_cloud_topic"        default="/scan_cloud"/>
+	
+	<arg name="odom_topic"              default="/RosAria/pose"/>
+	<arg name="visual_odometry"         default="false"/>
+
+<node pkg="rtabmap_ros" type="rtabmapviz" name="rtabmapviz" args="$(arg rtabmapviz_cfg)" launch-prefix="" respawn="true">
+
+		<param name="subscribe_depth"       type="bool"   value="true"/>
+		<param name="subscribe_scan"        type="bool"   value="$(arg subscribe_scan)"/>
+		<param name="subscribe_scan_cloud"  type="bool"   value="$(arg subscribe_scan_cloud)"/>
+		<param name="subscribe_odom_info"   type="bool"   value="$(arg visual_odometry)"/>
+		<param name="frame_id"              type="string" value="base_link"/>
+		<param name="wait_for_transform_duration"  type="double"   value="0.2"/>
+
+		<remap from="rgb/image"       to="$(arg rgb_topic)"/>
+		<remap from="depth/image"     to="$(arg depth_registered_topic)"/>
+		<remap from="rgb/camera_info" to="$(arg camera_info_topic)"/>
+		<remap from="scan"            to="$(arg scan_topic)"/>
+		<remap from="scan_cloud"      to="$(arg scan_cloud_topic)"/>
+		<remap unless="$(arg visual_odometry)" from="odom"  to="$(arg odom_topic)"/>
+
+	</node>
+
+</launch>

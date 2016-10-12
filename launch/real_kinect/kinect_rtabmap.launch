@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<!-- This launch file allows you to, when an RGBD sensor is connected via USB, you can use it to map an environment in 3D.
+     Packages needed: -openni_launch
+                      -openni_camera
+                      -rtabmap (stand-alone version in your ~ directory)
+                      -rtabmap_ros 
+-->
+
+<launch>
+
+
+
+	<arg name="use_rviz" default="false"/>
+	<arg name="use_rtabmapviz" default="true"/>
+
+	<!-- These topics were chosen because they are what openni.launch launches. They may be changed if openni.launch is changed -->
+	<arg name="rgb_topic"               default="/camera/rgb/image_rect_color" />
+	<arg name="depth_registered_topic"  default="/camera/depth_registered/image_raw" />
+	<arg name="camera_info_topic"       default="/camera/rgb/camera_info" />
+
+	<arg name="subscribe_scan"          default="false"/>     
+	<arg name="scan_topic"              default="/scan"/>
+
+
+
+<!-- This section launches openni.launch, which launches the RGBD camera and makes all of the nodes/topics available -->
+	<include file="$(find openni_launch)/launch/openni.launch"> 
+		<arg name = "depth_registration" value = "true"/>
+	</include>
+
+
+
+	<node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
+		<param name="scan_height"     value="60"/>
+		<param name="output_frame_id" value="/camera_depth_frame"/>
+		<param name="range_min"       value="0.45"/>
+		<param name="range_max"       value="4.0"/>
+
+		<remap from="image"           to="$(arg depth_registered_topic)"/>
+		<remap from="scan"            to="$(arg scan_topic)"/>
+	</node>
+
+
+
+	<include file="$(find rtabmap_ros)/launch/rgbd_mapping.launch">
+		<arg name="rtabmap_args"            value="--delete_db_on_start"/>
+		<arg name="rviz"                    value="$(arg use_rviz)"/>
+		<arg name="rtabmapviz"              value="$(arg use_rtabmapviz)"/>
+		<arg name="rgb_topic"               value="$(arg rgb_topic)" />
+		<arg name="depth_registered_topic"  value="$(arg depth_registered_topic)" />
+		<arg name="camera_info_topic"       value="$(arg camera_info_topic)" />
+		<arg name="subscribe_scan"          value="$(arg subscribe_scan)"/>  
+		<arg name="scan_topic"              value="$(arg scan_topic)"/>
+	</include>
+
+<!-- Tip: Slowly move the RGBD sensor around the area. If it ever looses odometry (if the background goes red), then try to point the camera at one of its previous locations so that it can remember where it was and you can continue mapping.
+-->
+
+
+
+</launch>
+

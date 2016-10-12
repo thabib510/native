@@ -1,0 +1,19 @@
+sudo chmod a+rw /dev/ttyUSB0
+sudo chmod a+rw /dev/ttyUSB1
+sudo chmod a+rw /dev/ttyUSB2
+sudo chmod a+rw /dev/ttyUSB3
+sudo chmod a+rw /dev/ttyACM0
+sudo chmod a+rw /dev/ttyACM1
+sudo chmod a+rw /dev/ttyACM2
+sudo chmod a+rw /dev/ttyACM3
+
+sudo chown abdul:abdul /dev/ttyUSB0
+sudo chown abdul:abdul /dev/ttyUSB1
+sudo chown abdul:abdul /dev/ttyUSB2
+sudo chown abdul:abdul /dev/ttyUSB3
+sudo chown abdul:abdul /dev/ttyACM0
+sudo chown abdul:abdul /dev/ttyACM1
+sudo chown abdul:abdul /dev/ttyACM2
+sudo chown abdul:abdul /dev/ttyACM3
+
+
