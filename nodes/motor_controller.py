@@ -5,7 +5,7 @@
 
 
 
-
+from native.msg import path 
 import math
 import numpy
 import tf.transformations
@@ -13,7 +13,7 @@ import rospy
 import re
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-#from native.msg import Astar_Goal # ************** Needs to be made first
+
 
 
 
@@ -21,18 +21,18 @@ from nav_msgs.msg import Odometry
 
 # ROS Topics used in this node
 cmd_vel_topic = '/RosAria/cmd_vel'
-pose_topic    = '/RosAria/pose'
+pose_topic    = '/RosAria/pose_bl'
 
 # setting up a simple goal path for motor_controller to follow
 Goal = []
-goal = Odometry()
-goal.pose.pose.position.x = 0.5
-goal.pose.pose.position.y = 0.0
-Goal.append(goal)
-goal2 = Odometry()
-goal2.pose.pose.position.x = 0.0
-goal2.pose.pose.position.y = 0.0
-Goal.append(goal2)
+#goal = Odometry()
+#goal.pose.pose.position.x = 0.5
+#goal.pose.pose.position.y = 0.0
+#Goal.append(goal)
+#goal2 = Odometry()
+#goal2.pose.pose.position.x = 0.0
+#goal2.pose.pose.position.y = 0.0
+#Goal.append(goal2)
 
 
 # Helps mover() understand whether we're at the final goal of the path or we're at an interim goal of the path
@@ -80,9 +80,9 @@ def turn(pub, cur_goal_odom, current_odom):
     
     # If this is the first time in this turn() function, then figure out the desired angle (counterclockwise from positive x-axis) and save that to angle_to_twist
     if recalculate_angle:
-        hypo = ((abs(cur_goal_odom.pose.pose.position.x - Pose.position.x) ** 2) + (abs(cur_goal_odom.pose.pose.position.y - Pose.position.y) ** 2)) ** 0.5
-        y = cur_goal_odom.pose.pose.position.y - Pose.position.y
-        x = cur_goal_odom.pose.pose.position.x - Pose.position.x
+        hypo = ((abs(cur_goal_odom.position.x - Pose.position.x) ** 2) + (abs(cur_goal_odom.position.y - Pose.position.y) ** 2)) ** 0.5
+        y = cur_goal_odom.position.y - Pose.position.y
+        x = cur_goal_odom.position.x - Pose.position.x
         angle_to_twist = math.degrees(math.asin(y/hypo))
         print angle_to_twist
         print x
@@ -184,7 +184,7 @@ def forward(pub, cur_goal_odom, current_odom):
     global recalculate_distance, distance_to_travel, cur_pose
     twist = Twist() 
     Pose = current_odom.pose.pose
-    Goal = cur_goal_odom.pose.pose
+    Goal = cur_goal_odom
     
     # If this is the first time in forward(), then determine the distance the robot needs to travel and record the starting position of the robot
     if recalculate_distance:
@@ -224,10 +224,11 @@ def forward(pub, cur_goal_odom, current_odom):
 #
 # RETURNS: Nothing
 def mover(odom, goal):
+    print goal
+    print goal.poses[0].position.x
     global goalAchieved, cur_index, final_index, i, done_twisting, done_linear, recalculate_distance, recalculate_angle, threadUsingMover
     
     if not rospy.is_shutdown() and not threadUsingMover and not goalAchieved: # While rospy has not shut down this node
-
         threadUsingMover = True        
 
         # Print out the mover's status
@@ -236,10 +237,10 @@ def mover(odom, goal):
         pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
         
         # Determine whether we need to turn, move forward, or completely stop
-        if not done_twisting and not done_linear: 
-            done_twisting = turn(pub, goal[cur_index], odom)
+        if not done_twisting and not done_linear:
+            done_twisting = turn(pub, goal.poses[cur_index], odom)
         elif done_twisting and not done_linear:
-            done_linear = forward(pub, goal[cur_index], odom)
+            done_linear = forward(pub, goal.poses[cur_index], odom)
         else:
             twist = Twist()
             twist.linear.x = 0.0
@@ -294,7 +295,8 @@ def mover(odom, goal):
 # RETURNS: Nothing
 def Get_Pose(the_goal):
     global goalAchieved, pose_global
-    rospy.init_node('Motor_Controller')
+    print the_goal
+    #rospy.init_node('Motor_Controller')
     pose_global = rospy.Subscriber(pose_topic, Odometry, mover, the_goal)
     rospy.spin()
 
