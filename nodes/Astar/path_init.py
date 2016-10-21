@@ -38,9 +38,10 @@ def paintNode(node,radius, image):
 #---------------------------------------------------------------------------------------------------
 def PathPublisher(msg):
     pub = rospy.Publisher('Path', pathMsg, queue_size = 10)
-    #rate = rospy.Rate(1)
-    while not rospy.is_shutdown():
-        pub.publish(msg)
+    pub.publish(msg)
+    #rate = rospy.Rate(2)
+    #while not rospy.is_shutdown():
+        #pub.publish(msg)
         #rate.sleep()
 #---------------------------------------------------------------------------------------------------
 def findPath(start,end,imageMap, worldSize, resolution, bottom):
@@ -52,13 +53,6 @@ def findPath(start,end,imageMap, worldSize, resolution, bottom):
     # create a grid and compute path:
     grid = Grid(nodeRadius,image)
     path = Pathfinding(start,end,grid,image)
-    print "path was found: ",path.pathExist
-    # publish path:
-    if(path.pathExist):
-        listOfGoals=getListOfGoals(path,bottom,worldSize,resolution)
-        pubMessage = pathMsg()
-        pubMessage.poses = listOfGoals
-        PathPublisher(pubMessage)
     # draw the path for demonstration purposes only:
     if(path.pathExist):
         image = drawPath(path,image,nodeRadius, grid.worldSize)
@@ -66,6 +60,13 @@ def findPath(start,end,imageMap, worldSize, resolution, bottom):
         image = paintNode(path.targetNode,nodeRadius,image)
     pyplot.imshow(image, pyplot.cm.gray)
     pyplot.show()
+    print "path was found: ",path.pathExist
+    # publish path:
+    if(path.pathExist):
+        listOfGoals=getListOfGoals(path,bottom,worldSize,resolution)
+        pubMessage = pathMsg()
+        pubMessage.poses = listOfGoals
+        PathPublisher(pubMessage)
 #---------------------------------------------------------------------
 # read map from file:
 #    image = read_pgm("3rd-Floor-2D-Map-Test-2.pgm", byteorder='<')
