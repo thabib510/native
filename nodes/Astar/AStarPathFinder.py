@@ -17,7 +17,7 @@ def retracePath(startNode, endNode):
 
 def getDistance(nodeA, nodeB):
     dstX = abs(nodeB.gridX-nodeA.gridX)
-    dstY = abs(nodeB.gridY-nodeB.gridY)
+    dstY = abs(nodeB.gridY-nodeA.gridY)
     if(dstX > dstY):
         return (14*dstY + 10*(dstX-dstY))
     return (14*dstX + 10*(dstY-dstX))

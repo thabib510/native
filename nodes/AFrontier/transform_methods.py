@@ -9,14 +9,17 @@ def mapToPGM(bottom,resolution,point,worldSize):
     newY = worldSize[1]-int(abs(bottom[1])/resolution)-int(point[1]/resolution)
     return (newX,newY)
 def PGMToMap(bottom,resolution,point,worldSize):
-    mapX = point[0]*resolution - bottom[0]
-    mapY = worldSize[1]*resolution -point[1]*resolution - bottom[1]
+    mapX = (point[0]*resolution - abs(bottom[0]))
+    #mapX = (point[0] - bottom[0])
+    mapY = worldSize[1]*resolution - point[1]*resolution - abs(bottom[1])
     return (mapX,mapY)
 def getListOfGoals(path,origin,worldSize,resolution):
     listOfGoals=[]
     for node in path.path:
         location=(node.getX(),node.getY(),0,1)
         pose = PGMToMap(origin,resolution,location,worldSize)
+        print "x location of goal "+str(pose[0])
+        print "y location of goal "+str(pose[1])
         msg = Pose()
         msg.position.x=pose[0]
         msg.position.y=pose[1]

@@ -7,7 +7,7 @@ from numpy.linalg import inv
 from matplotlib import pyplot
 from geometry_msgs.msg import Pose
 from AStarPathFinder import *
-from pgm_reader import *
+#from pgm_reader import *
 from transform_methods import *
 from native.msg import path as pathMsg
 #---------------------------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ def PathPublisher(msg):
 def findPath(start,end,imageMap, worldSize, resolution, bottom):
     image=imageMap
     #nodeRadius = 2
-    nodeRadius = int(0.3/resolution)
+    nodeRadius = int(0.2/resolution)
     if nodeRadius<1:
         nodeRadius = 1
     # create a grid and compute path:

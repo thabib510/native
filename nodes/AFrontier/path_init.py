@@ -7,7 +7,7 @@ from numpy.linalg import inv
 from matplotlib import pyplot
 from geometry_msgs.msg import Pose
 from AStarPathFinder import *
-from pgm_reader import *
+#from pgm_reader import *
 from transform_methods import *
 from native.msg import path as pathMsg
 #---------------------------------------------------------------------------------------------------
