@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+
+<launch>
+
+	<node name="pose_approx" pkg="native" type="pose_approx.py"/>
+	<node name="goal_approx" pkg="native" type="goal_approx.py"/>
+	<node name="synch_test"  pkg="native" type="synch_test.py" output="screen"/>
+
+</launch>

@@ -42,6 +42,7 @@ find_package(catkin REQUIRED)
  add_message_files(
    FILES
    A_Path.msg
+   path.msg
  )
 
  generate_messages(
