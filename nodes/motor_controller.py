@@ -313,7 +313,7 @@ def Get_Pose(the_goal):
 def motor_controller():
     print "motor_controller"
     rospy.init_node('Motor_Controller')
-    rospy.Subscriber("Astar_Path", Astar_Goal, Get_Pose)
+    rospy.Subscriber("Path", path, Get_Pose)
     
     rospy.spin() # To keep this node alive
 # *****************************************************************
@@ -324,7 +324,7 @@ def motor_controller():
 if __name__ == "__main__":
     try:
         print "in main()"
-        Get_Pose(Goal)
+        motor_controller()
     except rospy.ROSInterruptException:
         pass
 print "Everything shutted off..."
