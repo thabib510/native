@@ -130,6 +130,7 @@ class Pathfinding(object):
                 return
             for nodeNeighbor in getNeighbors(currentNode,grid,startNode,targetNode):
                 if ((not nodeNeighbor.walkable) or (nodeNeighbor in closedSet)):
+                #if (nodeNeighbor in closedSet):
                     continue                
                 newMovementCostToNeighbor = currentNode.gcost + getDistance(currentNode,nodeNeighbor)
                 nodeNeighbor.setgCost(newMovementCostToNeighbor)
