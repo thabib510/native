@@ -46,8 +46,8 @@ def PathPublisher(msg):
 #---------------------------------------------------------------------------------------------------
 def findPath(start,end,imageMap, worldSize, resolution, bottom):
     image=imageMap
-    nodeRadius = 1
-    #nodeRadius = int(0.2/resolution)
+    #nodeRadius = 1
+    nodeRadius = int(0.2/resolution)
     if nodeRadius<1:
         nodeRadius = 1
     # create a grid and compute path:
