@@ -34,7 +34,28 @@ def getNeighbors(node,grid,startNode,targetNode):
                 nodeNeighbor = grid.grid[checkY][checkX]
                 nodeNeighbor.setgCost(getDistance(nodeNeighbor,startNode))
                 nodeNeighbor.sethCost(getDistance(nodeNeighbor,targetNode))
+                localCost = getDistance(nodeNeighbor,node)
+                if localCost>14:
+                    nodeNeighbor.setDiagonal(True)
+                else:
+                    nodeNeighbor.setDiagonal(False)
                 neighbors.append(nodeNeighbor)
+    if(not neighbors[1].walkable):
+        print "top nodes are corners"
+        neighbors[0].setgCost(neighbors[0].gcost+100)
+        neighbors[2].setgCost(neighbors[2].gcost+100)
+    elif(not neighbors[3].walkable):
+        print "left are corners"
+        neighbors[0].setgCost(neighbors[0].gcost+200)
+        neighbors[5].setgCost(neighbors[5].gcost+200)
+    elif(not neighbors[4].walkable):
+        neighbors[2].setgCost(neighbors[2].gcost+100)
+        neighbors[7].setgCost(neighbors[7].gcost+200)
+        print "right are corners"
+    elif(not neighbors[6].walkable):
+        neighbors[5].setgCost(neighbors[5].gcost+200)
+        neighbors[7].setgCost(neighbors[7].gcost+200)
+        print "bottoms are corners"
     return neighbors
 
 def nodeFromWorldPoint(position,grid):
@@ -67,6 +88,10 @@ class Node(object):
         self.hcost=cost
     def getfCost(self):
         return self.gcost+self.hcost
+    def isDiagonal(self):
+        return self.diagonal
+    def setDiagonal(self,diagonality):
+        self.diagonal = diagonality
     def setParentNode(self,node):
         self.parent = node
     def isWalkable(self, plane):
