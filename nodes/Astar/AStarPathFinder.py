@@ -5,6 +5,18 @@ import numpy
 from matplotlib import pyplot
 
 #-------------------------------------------------------------------------
+# for debuggin only!
+def paintNode(node,radius, image):
+    nodeRadius = radius
+    xpoint = node.getX()
+    ypoint = node.getY()
+    x1 = xpoint-nodeRadius
+    x2 = xpoint+nodeRadius
+    y1 = ypoint-nodeRadius
+    y2 = ypoint+nodeRadius
+    image[y1:y2,x1:x2] =10
+    return image
+#-------------------------------------------------------------------------------------
 # methods associated with A*
 def retracePath(startNode, endNode):
     currentNode = endNode
@@ -19,8 +31,8 @@ def getDistance(nodeA, nodeB):
     dstX = abs(nodeB.gridX-nodeA.gridX)
     dstY = abs(nodeB.gridY-nodeA.gridY)
     if(dstX > dstY):
-        return (14*dstY + 10*(dstX-dstY))
-    return (14*dstX + 10*(dstY-dstX))
+        return (26*dstY + 10*(dstX-dstY))
+    return (26*dstX + 10*(dstY-dstX))
 
 def getNeighbors(node,grid,startNode,targetNode):
     neighbors = []
@@ -35,27 +47,35 @@ def getNeighbors(node,grid,startNode,targetNode):
                 nodeNeighbor.setgCost(getDistance(nodeNeighbor,startNode))
                 nodeNeighbor.sethCost(getDistance(nodeNeighbor,targetNode))
                 localCost = getDistance(nodeNeighbor,node)
+                # how to check second neighbor?
                 if localCost>14:
                     nodeNeighbor.setDiagonal(True)
                 else:
                     nodeNeighbor.setDiagonal(False)
                 neighbors.append(nodeNeighbor)
-    if(not neighbors[1].walkable):
-        print "top nodes are corners"
-        neighbors[0].setgCost(neighbors[0].gcost+100)
-        neighbors[2].setgCost(neighbors[2].gcost+100)
-    elif(not neighbors[3].walkable):
-        print "left are corners"
-        neighbors[0].setgCost(neighbors[0].gcost+200)
-        neighbors[5].setgCost(neighbors[5].gcost+200)
-    elif(not neighbors[4].walkable):
-        neighbors[2].setgCost(neighbors[2].gcost+100)
-        neighbors[7].setgCost(neighbors[7].gcost+200)
-        print "right are corners"
-    elif(not neighbors[6].walkable):
-        neighbors[5].setgCost(neighbors[5].gcost+200)
-        neighbors[7].setgCost(neighbors[7].gcost+200)
-        print "bottoms are corners"
+    #check second neighbors
+    for node in neighbors:
+        for y in range(-1,2):
+            for x in range (-1,2):
+                if (x==0 and y==0):
+                    continue
+                checkY = node.gridY +y
+                checkX = node.gridX +x
+                if (checkX >=0 and checkX<grid.gridSizeX and checkY>= 0 and checkY<grid.gridSizeY):
+                    if (not grid.grid[checkY][checkX].walkable): # if any of my second neighbors is a "wall" then make me more costly
+                        node.setgCost(node.gcost+7)
+    if(not neighbors[1].walkable):  
+        neighbors[0].setgCost(neighbors[0].gcost+3)
+        neighbors[2].setgCost(neighbors[2].gcost+3)
+    if(not neighbors[3].walkable):
+        neighbors[0].setgCost(neighbors[0].gcost+3)
+        neighbors[5].setgCost(neighbors[5].gcost+3)
+    if(not neighbors[4].walkable):
+        neighbors[2].setgCost(neighbors[2].gcost+3)
+        neighbors[7].setgCost(neighbors[7].gcost+3)
+    if(not neighbors[6].walkable):
+        neighbors[5].setgCost(neighbors[5].gcost+3)
+        neighbors[7].setgCost(neighbors[7].gcost+3)
     return neighbors
 
 def nodeFromWorldPoint(position,grid):
@@ -144,7 +164,7 @@ class Pathfinding(object):
         while(len(openSet)>0):
             currentNode = openSet[0]
             for i in range(len(openSet)):
-                if(openSet[i].getfCost()<currentNode.getfCost() or (openSet[i].getfCost() == currentNode.getfCost() and openSet[i].hcost < currentNode.hcost)):
+                if(openSet[i].getfCost()<currentNode.getfCost() or (openSet[i].getfCost() == currentNode.getfCost() and openSet[i].hcost < currentNode.hcost)): #changed to prioritize gcost!
                     currentNode = openSet[i]
             openSet.remove(currentNode)
             closedSet.append(currentNode)
@@ -155,12 +175,12 @@ class Pathfinding(object):
                 return
             for nodeNeighbor in getNeighbors(currentNode,grid,startNode,targetNode):
                 if ((not nodeNeighbor.walkable) or (nodeNeighbor in closedSet)):
-                #if (nodeNeighbor in closedSet):
                     continue                
-                newMovementCostToNeighbor = currentNode.gcost + getDistance(currentNode,nodeNeighbor)
+                newMovementCostToNeighbor = nodeNeighbor.gcost + getDistance(startNode,nodeNeighbor) #currentNode.gcost + getDistance(currentNode,nodeNeighbor)
                 nodeNeighbor.setgCost(newMovementCostToNeighbor)
                 nodeNeighbor.sethCost(getDistance(nodeNeighbor, targetNode))
                 nodeNeighbor.setParentNode(currentNode)
-                if(not nodeNeighbor in openSet):
+                #openSet.append(nodeNeighbor)
+                if(not (nodeNeighbor in openSet)): 
                     openSet.append(nodeNeighbor)
  
