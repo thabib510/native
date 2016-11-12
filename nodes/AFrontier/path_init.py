@@ -10,7 +10,10 @@ from AStarPathFinder import *
 #from pgm_reader import *
 from transform_methods import *
 from native.msg import path as pathMsg
+import datetime
 #---------------------------------------------------------------------------------------------------
+#empty message:
+EmptyMessage = pathMsg()
 # drawing methods:
 def drawPath(path,image,radius,gridWorldSize):
     for node in path.path:
@@ -37,29 +40,38 @@ def paintNode(node,radius, image):
     return image
 #---------------------------------------------------------------------------------------------------
 def PathPublisher(msg):
+    global EmptyMessage
     pub = rospy.Publisher('Path', pathMsg, queue_size = 10)
+    pub.publish(EmptyMessage)
+    rate = rospy.Rate(2)
+    rate.sleep()
     pub.publish(msg)
-    #rate = rospy.Rate(2)
-    #while not rospy.is_shutdown():
+    
+    #while iterations <2:
         #pub.publish(msg)
-        #rate.sleep()
+        
 #---------------------------------------------------------------------------------------------------
 def findPath(start,end,imageMap, worldSize, resolution, bottom):
     image=imageMap
     #nodeRadius = 2
-    nodeRadius = int(0.3/resolution)
+    nodeRadius = int(0.4/resolution)
     if nodeRadius<1:
         nodeRadius = 1
     # create a grid and compute path:
+    print datetime.datetime.now().time()
+    print "creating Grid... "
     grid = Grid(nodeRadius,image)
+    print "finding next frontier..."
+    print datetime.datetime.now().time()
     path = Pathfinding(start,end,grid,image)
+    print datetime.datetime.now().time()
     # draw the path for demonstration purposes only:
-    if(path.pathExist):
-        image = drawPath(path,image,nodeRadius, grid.worldSize)
-        image = paintNode(path.startNode,nodeRadius,image)
-        image = paintNode(path.targetNode,nodeRadius,image)
-    pyplot.imshow(image, pyplot.cm.gray)
-    pyplot.show()
+    #if(path.pathExist):
+    #    image = drawPath(path,image,nodeRadius, grid.worldSize)
+    #    image = paintNode(path.startNode,nodeRadius,image)
+    #    image = paintNode(path.targetNode,nodeRadius,image)
+    #pyplot.imshow(image, pyplot.cm.gray)
+    #pyplot.show()
     print "path was found: ",path.pathExist
     # publish path:
     if(path.pathExist):

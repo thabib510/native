@@ -18,8 +18,8 @@ def getListOfGoals(path,origin,worldSize,resolution):
     for node in path.path:
         location=(node.getX(),node.getY(),0,1)
         pose = PGMToMap(origin,resolution,location,worldSize)
-        print "x location of goal "+str(pose[0])
-        print "y location of goal "+str(pose[1])
+        #print "x location of goal "+str(pose[0])
+        #print "y location of goal "+str(pose[1])
         msg = Pose()
         msg.position.x=pose[0]
         msg.position.y=pose[1]

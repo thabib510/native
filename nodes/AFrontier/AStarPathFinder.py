@@ -7,17 +7,17 @@ from matplotlib import pyplot
 #-------------------------------------------------------------------------
 # methods associated with A*
 def retracePath(startNode, endNode):
-    currentNode = endNode
+    currentNode = endNode.parent #exclude end node.
     path =[]
     while(currentNode != startNode):
-        path.append(currentNode)
-        currentNode = currentNode.parent
+        path.append(currentNode)    
+        currentNode = currentNode.parent    
     path.reverse()
     return path
 
 def getDistance(nodeA, nodeB):
     dstX = abs(nodeB.gridX-nodeA.gridX)
-    dstY = abs(nodeB.gridY-nodeB.gridY)
+    dstY = abs(nodeB.gridY-nodeA.gridY)
     if(dstX > dstY):
         return (10*dstY + 10*(dstX-dstY))
     return (10*dstX + 10*(dstY-dstX))
@@ -32,11 +32,34 @@ def getNeighbors(node,grid,startNode,targetNode):
             checkX = node.gridX + x
             if (checkX >=0 and checkX<grid.gridSizeX and checkY>= 0 and checkY<grid.gridSizeY):
                 nodeNeighbor = grid.grid[checkY][checkX]
-                nodeNeighbor.setgCost(getDistance(nodeNeighbor,startNode))
+                #nodeNeighbor.setgCost(getDistance(nodeNeighbor,node)) # cost to this guy.
                 # in the frontier case there is no Hcost! we are searching unboundely..
                 #nodeNeighbor.sethCost(getDistance(nodeNeighbor,targetNode))
-                #nodeNeighbor.sethCost(0)
+                nodeNeighbor.sethCost(0)
                 neighbors.append(nodeNeighbor)
+    #check second neighbors
+    for node in neighbors:
+        for y in range(-1,2):
+            for x in range (-1,2):
+                if (x==0 and y==0):
+                    continue
+                checkY = node.gridY +y
+                checkX = node.gridX +x
+                if (checkX >=0 and checkX<grid.gridSizeX and checkY>= 0 and checkY<grid.gridSizeY):
+                    if (not grid.grid[checkY][checkX].walkable): # if any of my second neighbors is a "wall" then make me more costly
+                        node.addTax(7)
+    if(not neighbors[1].walkable):  
+        neighbors[0].addTax(4)
+        neighbors[2].addTax(4)
+    if(not neighbors[3].walkable):
+        neighbors[0].addTax(4)
+        neighbors[5].addTax(4)
+    if(not neighbors[4].walkable):
+        neighbors[2].addTax(4)
+        neighbors[7].addTax(4)
+    if(not neighbors[6].walkable):
+        neighbors[5].addTax(4)
+        neighbors[7].addTax(4)
     return neighbors
 
 def nodeFromWorldPoint(position,grid):
@@ -56,6 +79,8 @@ class Node(object):
         self.worldPosition = worldPosition
         self.gridX = x
         self.gridY = y
+        self.tax=0
+        self.gcost=0 # 0 means this node has not been evaluated
         self.isFrontier = False        
     def getX(self):
         return self.worldPosition[0] 
@@ -67,24 +92,30 @@ class Node(object):
         self.gcost=cost
     def sethCost(self,cost):
         self.hcost=cost
+    def addTax(self,addedTax):
+        self.tax=self.tax+addedTax
     def getfCost(self):
-        return self.gcost+self.hcost
+        return self.gcost+self.hcost+self.tax
     def setParentNode(self,node):
         self.parent = node
     def isWalkable(self, plane):
-        f=0
-        for i in range (len(plane)):
-            for k in range (len(plane[i])):
-                #check for the case we don't know: 
-                if plane[i][k] <230 and plane[i][k]>-1:
-                    self.isFrontier=False
-                    return False
-                if plane[i][k] == -1:
-                    f=f+1
-                    if f>14:
-                        #print "Frontier candidate found!",f     
-                        self.isFrontier=True
-                     
+        #if plane.all()>0:             
+        self.isFrontier=True  
+        for x in range (len(plane)):
+            if (plane[x].all()>-1 and plane[x].any() < 230):
+                self.isFrontier = False
+                return False
+            if (plane[x].any()>230):
+               self.isFrontier = False
+               print "not frontier"
+               return True
+        #for i in range (len(plane)):
+        #    for k in range (len(plane[i])):
+        #        if plane[i][k] <230 and plane[i][k] >-1 : 
+        #            self.isFrontier = False
+        #            return False
+        #        if plane[i][k] == -1:
+        #            self.isFrontier=True         
         return True
     
     
@@ -107,11 +138,53 @@ class Grid(object):
                 y1 = ypoint-nodeRadius
                 y2 = ypoint+nodeRadius
                 nodePlane = image[y1:y2,x1:x2]
+                frontierPlane = numpy.zeros((nodeDiameter,nodeDiameter))
+                unoccupiedPlane = numpy.zeros((nodeDiameter,nodeDiameter))
+                occupiedPlane = numpy.zeros((nodeDiameter,nodeDiameter))
+
+                frontierPlane[0:nodeDiameter,0:nodeDiameter]=-1
+                occupiedPlane[0:nodeDiameter,0:nodeDiameter]=5
+                unoccupiedPlane[0:nodeDiameter,0:nodeDiameter]=230
+                #print frontierPlane
+                #print unoccupiedPlane
+                frontierTestArray = nodePlane == frontierPlane
+                unoccupiedTestArray = nodePlane > unoccupiedPlane
+                occupiedTestArray = nodePlane == occupiedPlane
+                    
+                #print testArray
+                #print "....................."
+                #print secondTestArray
+                #print testArray.all()
+                #print secondTestArray.all()
+                #blank = input("press enter: ")
+                #if nodePlane.all()>0:
+                #    print "node plane: ",nodePlane
+                #    blank = input("press enter: ") 
                 newNode=Node((xpoint,ypoint),i,j)
-                newNode.setWalkable(nodePlane)
+                if unoccupiedTestArray.all():
+                #all pixels are white:
+                    newNode.walkable=True
+                    newNode.isFrontier=False
+                    #print nodePlane
+                elif (occupiedTestArray.any()):
+                # if any are occupied:
+                    newNode.isFrontier = False
+                    newNode.walkable=False
+                elif(frontierTestArray.all()):
+                #if all equal the unexplored plain, not frontier:
+                    newNode.isFrontier = False
+                    newNode.walkable=False
+                else:
+                # else, there is no occupied, only white and gray:
+                    newNode.walkable=True
+                    newNode.isFrontier = True
+                    #print nodePlane
+                    
+                #newNode.setWalkable(nodePlane)
                 grid[j][i]= newNode
         self.grid=grid
         self.worldSize = gridWorldSize
+
 
 
 # path finding method/Class            
@@ -119,23 +192,25 @@ class Pathfinding(object):
     def __init__(self,startPosition, targetPosition,grid,image):
         self.mappy=image
         self.pathExist=False
+        #print "start position: ", startPosition
         startNode = nodeFromWorldPoint(startPosition,grid)
         targetNode = nodeFromWorldPoint(targetPosition,grid)
         #startNode.sethCost(getDistance(startNode,targetNode))
         startNode.sethCost(150)#albitrarily large number
         startNode.setgCost(0)
         self.startNode=startNode
-        #self.targetNode=targetNode
+        self.targetNode=targetNode
         openSet=[startNode]
         closedSet=[]
+        d=0
         while(len(openSet)>0):
             currentNode = openSet[0]
             for i in range(len(openSet)):
                 if(openSet[i].getfCost()<currentNode.getfCost() or (openSet[i].getfCost() == currentNode.getfCost() and openSet[i].hcost < currentNode.hcost)):
                     currentNode = openSet[i]
+                    #print "current node evaluated: ",currentNode.worldPosition
             openSet.remove(currentNode)
             closedSet.append(currentNode)
-            #if (currentNode.worldPosition == targetNode.worldPosition):
             if (currentNode.isFrontier):
                 self.path = retracePath(startNode,currentNode)
                 self.pathExist=True
@@ -144,12 +219,14 @@ class Pathfinding(object):
                 return
             for nodeNeighbor in getNeighbors(currentNode,grid,startNode,targetNode):
                 if ((not nodeNeighbor.walkable) or (nodeNeighbor in closedSet)):
+                    #print "this node was disqualified: ",nodeNeighbor.worldPosition
                     continue                
                 newMovementCostToNeighbor = currentNode.gcost + getDistance(currentNode,nodeNeighbor)
-                nodeNeighbor.setgCost(newMovementCostToNeighbor)
-                #nodeNeighbor.sethCost(getDistance(nodeNeighbor, targetNode))
-                nodeNeighbor.sethCost(0)
-                nodeNeighbor.setParentNode(currentNode)
-                if(not nodeNeighbor in openSet):
+                if(nodeNeighbor.gcost == 0 or newMovementCostToNeighbor< nodeNeighbor.gcost): 
+                    nodeNeighbor.setgCost(newMovementCostToNeighbor)
+                    nodeNeighbor.sethCost(0)
+                    nodeNeighbor.setParentNode(currentNode)
+                if(not (nodeNeighbor in openSet)):
                     openSet.append(nodeNeighbor)
+        print "no frontier found, mapping complete... go home?"
  
