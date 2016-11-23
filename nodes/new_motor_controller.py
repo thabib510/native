@@ -11,8 +11,10 @@ import numpy
 import tf.transformations
 import rospy
 import re
-from geometry_msgs.msg import Twist
+import time
+from geometry_msgs.msg import Twist, Pose
 from nav_msgs.msg import Odometry
+from std_msgs.msg import String
 
 
 
@@ -22,30 +24,23 @@ from nav_msgs.msg import Odometry
 # ROS Topics used in this node
 cmd_vel_topic = '/RosAria/cmd_vel'
 pose_topic    = '/RosAria/pose_bl'
+Astar_topic   = 'Path'
 
-# setting up a simple goal path for motor_controller to follow
-#goal = Odometry()
-#goal.pose.pose.position.x = 0.5
-#goal.pose.pose.position.y = 0.0
-#Goal.append(goal)
+# Global variable that will hold the list of goals sent from A* (initiallized with a (0,0,0) pose)
+Goal = [Pose()]
+
+
 
 # Helps mover() understand whether we're at the final goal of the path or we're at an interim goal of the path
 cur_index = 0
-<<<<<<< HEAD
-final_index = len(Goal) - 1
-=======
 final_index = 0
->>>>>>> add011a9860c0fb0beacd914a9fc803a9c0e72f0
-goalAchieved = False
+goalAchieved = True
 
 # These two variables help mover() understand whether the robot has twisted/advanced far enough to reach the current goal
 done_twisting = False
 done_linear = False
 
-i = 0 # Just a way to figure out how many times you access the mover() function. It's used with a print statement
-pose_global = None # A global variable to hold the rospy.subscriber() object
-threadUsingMover = False
-
+new_goal_setted = False # a variable to let mover() know whether a new list of goals have been updated
 
 # Variables used to record the deisred angle to twist and desired distance to travel
 recalculate_distance = True
@@ -54,6 +49,8 @@ cur_pose = Odometry(); # holds the current pose of the robot before it advances
 recalculate_angle = True
 angle_to_twist = 0.0
 angle_tolerance = 1.5
+#interrupt flag:
+interrupt = False
 
 
 
@@ -61,8 +58,16 @@ angle_tolerance = 1.5
 
 
 
+#------------------------------------------------------------------------
+def GoalCompleted():
+    msg = "Ready"
+    primer = "not ready"
+    pub = rospy.Publisher('GoalRequest', String, queue_size = 10)
+    pub.publish(primer)
+    time.sleep(10)
+    pub.publish(msg)
 
-
+#-----------------------------------------------------------------------
 
 # This function first determines the desired angle that the robot needs to have and then determines the turning direction of the robot to turn to that desired angle.
 #
@@ -126,17 +131,6 @@ def turn(pub, cur_goal_odom, current_odom):
         print "cur_pose:\n\tangle: %.4f\ngoal_pose:\n\tangle: %.4f\n" % (yaw_angle, angle_to_twist)
         print """
                  DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
-                 DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE
                  DOOOOOOOOOOOOOOOOO0OOOOOOOOOOOOOOOOOONE"""
         
         return True
@@ -164,8 +158,7 @@ def turn(pub, cur_goal_odom, current_odom):
         #####print "cur_pose:\n\tangle: %.4f\ngoal_pose:\n\tangle: %.4f\n" % (yaw_angle, angle_to_twist)
         print "Robot Angle: %.4f \t Goal Angle: %.4f\n" % (yaw_angle, angle_to_twist)
         
-        return False 
-        
+        return False         
 
 
 
@@ -214,6 +207,36 @@ def forward(pub, cur_goal_odom, current_odom):
 
 
 
+#----------------------------------------------------
+# INITIALIZE MODULE:
+def moveToMap():
+    global interrupt
+    #rate = rospy.Rate(10)
+    pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
+    twist = Twist()
+    if interrupt:
+        twist.linear.x = 0.0
+        twist.angular.z = 0.0
+        pub.publish(twist)
+        return
+    twist.linear.x = 0.0
+    twist.angular.z= 0.0 
+    pub.publish(twist)
+    time.sleep(2)
+    twist.linear.x  = 0.2
+    twist.angular.z = 0.0
+    pub.publish(twist)
+    #rate.sleep()
+    time.sleep(10) # we may have to publish multiple times!
+    twist.linear.x = 0.0
+    twist.angular.z= 0.2
+    pub.publish(twist) # we may have to publish multiple times!
+    #rate.sleep()
+    time.sleep(37)
+    twist.linear.x = 0.0
+    twist.angular.z= 0.0 
+    pub.publish(twist) # may have to publish multiple times!
+
 
 # This function determines whether the robot needs to turn or move forward. After that, it determines whether the robot has reached its final goal or an intermittent goal
 #
@@ -221,28 +244,30 @@ def forward(pub, cur_goal_odom, current_odom):
 #          goal -> Goals list of Odometry() objects
 #
 # RETURNS: Nothing
-def mover(odom, goal): 
-    print goal
-    print goal.poses[0].position.x
-    global goalAchieved, cur_index, final_index, i, done_twisting, done_linear, recalculate_distance, recalculate_angle, threadUsingMover
-    print cur_index
-    #if not rospy.is_shutdown() and not threadUsingMover and not goalAchieved: # While rospy has not shut down this node
-    if not goalAchieved: # While rospy has not shut down this node
-        threadUsingMover = True        
-
+def mover(odom): 
+    global goalAchieved, cur_index, final_index, done_twisting, done_linear, recalculate_distance, recalculate_angle, new_goal_setted, Goal, interrupt
+    pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
+    
+    if interrupt:
+        twist = Twist()
+        twist.linear.x = 0.0
+        twist.angular.z = 0.0
+        pub.publish(twist)
+        return
         
-        
-        
-        # This flag tells us if we've reached the current goal
-        
-        
+    goal = Goal # Create a temporary copy of current goal
+    if len(goal.poses) <1:
+        print "emtpy list.."
+        return
+    if new_goal_setted: # If a new goal has been set, then make sure that goalAchieved is set to False
+        goalAchieved = False
+        cur_index = 0
+        final_index = len(goal.poses)-1
+        new_goal_setted = False
+        print '\n\t***** New Goal Received *****'
+    if not goalAchieved and not rospy.is_shutdown(): # While rospy has not shut down this node and we have not achieved our final goal,
         if cur_index != final_index: # If we've reached the current goal, but did not reach the final goal in the path
-            
-            # Print out the mover's status
-            i = i + 1
-            ###print "%d In mover function" % i 
-            pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
-        
+            #pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
             # Determine whether we need to turn, move forward, or completely stop
             if not done_twisting and not done_linear:
                 done_twisting = turn(pub, goal.poses[cur_index], odom)
@@ -253,34 +278,41 @@ def mover(odom, goal):
                 twist.linear.x = 0.0
                 twist.angular.z = 0.0
                 pub.publish(twist)
-            
             complete = done_twisting and done_linear
-
             if complete:
                 cur_index = cur_index + 1 # increment the index
-            
                 # Reset the flags
                 done_twisting, done_linear = False, False 
                 recalculate_distance, recalculate_angle = True, True 
-
                 print "cur_index = %d\n\n" % cur_index
-
         elif cur_index == final_index: # If we've reached our goal and it was our final goal
             goalAchieved = True
             
             # Reset the flags and indexes
             done_twisting, done_linear = False, False 
             recalculate_distance, recalculate_angle = True, True
-            cur_index, i = 0, 0 # Reset the current index 
-            
-            print "\n\n\nFinal Goal Reached. Leaving mover() function..."
+            cur_index = 0 # Reset the current index 
 
-        threadUsingMover = False # Let the next thread use this callback    
+            print "cur_index = %d\n\n" % cur_index
             
-    else:
-        print '\n* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *'
-        print   '* * * * * * * * Current goal met... waiting for next goal * * * * * * * * * * * *'
-        print   '* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n'
+            print '\n\n\n* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *'
+            print       '* * * * * * * * Current goal met... waiting for next goal * * * * * * * * * * * *'
+            print       '* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n'
+            # publish to topic
+            twist = Twist()
+            twist.linear.x = 0.0
+            twist.angular.z= 0.2
+            pub.publish(twist) # we may have to publish multiple times!
+            #rate.sleep()
+            time.sleep(37)
+            twist.linear.x = 0.0
+            twist.angular.z= 0.0 
+            pub.publish(twist)
+            GoalCompleted()
+    elif rospy.is_shutdown(): # We have either reached the goal or rospy is about to shutdown.
+        print "\n\n\trospy is shutting down motion_controller()...\n"
+    else: # If we've reached our goal, do nothing and wait for the next goal TODO
+        pass
     return
 
 
@@ -292,43 +324,40 @@ def mover(odom, goal):
 # NEEDS:   goal -> Goals list of Odometry() objects
 #
 # RETURNS: Nothing
-def Get_Pose(the_goal):
-    global goalAchieved, pose_global, final_index
-    final_index = len(the_goal.poses)
-    print the_goal
-    #rospy.init_node('Motor_Controller')
-    pose_global = rospy.Subscriber(pose_topic, Odometry, mover, the_goal)
-    rospy.spin()
+def set_Goal(the_goal):
+    global goalAchieved, cur_index, final_index, Goal, new_goal_setted
+    new_goal_setted = True
+    cur_index = 0
+    final_index = len(the_goal.poses) - 1
+    Goal = the_goal
+    goalAchieved = False   
 
-    #my_spin = rospy.Rate(1) # Gives our motor_controller a frequency of 1Hz
-    #while not goalAchieved and not rospy.is_shutdown():
-    #    pose_global = rospy.Subscriber(pose_topic, Odometry, mover, Goal)
-    #    my_spin.sleep() # sleep for 1 sec
-    #print "goal achieved is %s" % str(goalAchieved)
+    print '\n\t***** New Goal Set *****' 
     
+    return
 
 
 
 
 
-# ********************** IGNORE FUNCTION FOR NOW ******************
-def motor_controller():
-    global goalAchieved
-    goalAchieved = False
-    print "motor_controller"
-    rospy.init_node('Motor_Controller')
-    rospy.Subscriber("Path", path, Get_Pose)
-    
+def motion_controller():
+    print "In motion_controller..."
+    rospy.init_node('Motion_Controller')
+    print "Moving inside map... "
+    moveToMap()
+    print "ready to explore!"
+    GoalCompleted() #ready to take goals
+    goal_sub = rospy.Subscriber(Astar_topic, path, set_Goal)
+    pose_sub = rospy.Subscriber(pose_topic, Odometry, mover)
     rospy.spin() # To keep this node alive
-# *****************************************************************
+
 
 
 
 
 if __name__ == "__main__":
     try:
-        print "in main()"
-        motor_controller()
+        motion_controller()
     except rospy.ROSInterruptException:
         pass
 print "Everything shutted off..."
