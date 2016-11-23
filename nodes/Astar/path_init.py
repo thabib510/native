@@ -54,12 +54,13 @@ def findPath(start,end,imageMap, worldSize, resolution, bottom):
     grid = Grid(nodeRadius,image)
     path = Pathfinding(start,end,grid,image)
     # draw the path for demonstration purposes only:
-    if(path.pathExist):
-        image = drawPath(path,image,nodeRadius, grid.worldSize)
-        image = paintNode(path.startNode,nodeRadius,image)
-        image = paintNode(path.targetNode,nodeRadius,image)
-    pyplot.imshow(image, pyplot.cm.gray)
-    pyplot.show()
+    #if(path.pathExist):
+    #    image = drawPath(path,image,nodeRadius, grid.worldSize)
+    #image = paintNode(path.startNode,nodeRadius,image)
+    #image = paintNode(path.targetNode,nodeRadius,image)    
+    #image[image==-1]=180
+    #pyplot.imshow(image, pyplot.cm.gray)
+    #pyplot.show()
     print "path was found: ",path.pathExist
     # publish path:
     if(path.pathExist):

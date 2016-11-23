@@ -6,14 +6,14 @@ import rospy
 from numpy.linalg import inv
 from matplotlib import pyplot
 from geometry_msgs.msg import Pose
-from AStarPathFinder import *
+from FrontierFinder import *
 #from pgm_reader import *
 from transform_methods import *
-from native.msg import path as pathMsg
+#from native.msg import path as pathMsg
 import datetime
 #---------------------------------------------------------------------------------------------------
 #empty message:
-EmptyMessage = pathMsg()
+EmptyMessage = Pose()
 # drawing methods:
 def drawPath(path,image,radius,gridWorldSize):
     for node in path.path:
@@ -41,14 +41,11 @@ def paintNode(node,radius, image):
 #---------------------------------------------------------------------------------------------------
 def PathPublisher(msg):
     global EmptyMessage
-    pub = rospy.Publisher('Path', pathMsg, queue_size = 10)
+    pub = rospy.Publisher('Target', Pose, queue_size = 10)
     pub.publish(EmptyMessage)
     rate = rospy.Rate(2)
     rate.sleep()
     pub.publish(msg)
-    
-    #while iterations <2:
-        #pub.publish(msg)
         
 #---------------------------------------------------------------------------------------------------
 def findPath(start,end,imageMap, worldSize, resolution, bottom):
@@ -65,19 +62,16 @@ def findPath(start,end,imageMap, worldSize, resolution, bottom):
     print datetime.datetime.now().time()
     path = Pathfinding(start,end,grid,image)
     print datetime.datetime.now().time()
-    # draw the path for demonstration purposes only:
-    #if(path.pathExist):
-    #    image = drawPath(path,image,nodeRadius, grid.worldSize)
-    #    image = paintNode(path.startNode,nodeRadius,image)
-    #    image = paintNode(path.targetNode,nodeRadius,image)
-    #pyplot.imshow(image, pyplot.cm.gray)
-    #pyplot.show()
-    print "path was found: ",path.pathExist
+    print "frontier found: ",path.pathExist
     # publish path:
     if(path.pathExist):
-        listOfGoals=getListOfGoals(path,bottom,worldSize,resolution)
-        pubMessage = pathMsg()
-        pubMessage.poses = listOfGoals
+        #listOfGoals=getListOfGoals(path,bottom,worldSize,resolution)
+        pubMessage = Pose()
+        point = (path.targetNode.getX(),path.targetNode.getY())
+        location = PGMToMap(bottom,resolution,point,worldSize)
+        pubMessage.position.x = location[0]
+        pubMessage.position.y = location[1]
+        pubMessage.orientation.w=1.0
         PathPublisher(pubMessage)
 #---------------------------------------------------------------------
 # read map from file:

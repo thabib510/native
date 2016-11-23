@@ -32,34 +32,8 @@ def getNeighbors(node,grid,startNode,targetNode):
             checkX = node.gridX + x
             if (checkX >=0 and checkX<grid.gridSizeX and checkY>= 0 and checkY<grid.gridSizeY):
                 nodeNeighbor = grid.grid[checkY][checkX]
-                #nodeNeighbor.setgCost(getDistance(nodeNeighbor,node)) # cost to this guy.
-                # in the frontier case there is no Hcost! we are searching unboundely..
-                #nodeNeighbor.sethCost(getDistance(nodeNeighbor,targetNode))
                 nodeNeighbor.sethCost(0)
                 neighbors.append(nodeNeighbor)
-    #check second neighbors
-    for node in neighbors:
-        for y in range(-1,2):
-            for x in range (-1,2):
-                if (x==0 and y==0):
-                    continue
-                checkY = node.gridY +y
-                checkX = node.gridX +x
-                if (checkX >=0 and checkX<grid.gridSizeX and checkY>= 0 and checkY<grid.gridSizeY):
-                    if (not grid.grid[checkY][checkX].walkable): # if any of my second neighbors is a "wall" then make me more costly
-                        node.addTax(7)
-    if(not neighbors[1].walkable):  
-        neighbors[0].addTax(4)
-        neighbors[2].addTax(4)
-    if(not neighbors[3].walkable):
-        neighbors[0].addTax(4)
-        neighbors[5].addTax(4)
-    if(not neighbors[4].walkable):
-        neighbors[2].addTax(4)
-        neighbors[7].addTax(4)
-    if(not neighbors[6].walkable):
-        neighbors[5].addTax(4)
-        neighbors[7].addTax(4)
     return neighbors
 
 def nodeFromWorldPoint(position,grid):
@@ -141,25 +115,12 @@ class Grid(object):
                 frontierPlane = numpy.zeros((nodeDiameter,nodeDiameter))
                 unoccupiedPlane = numpy.zeros((nodeDiameter,nodeDiameter))
                 occupiedPlane = numpy.zeros((nodeDiameter,nodeDiameter))
-
                 frontierPlane[0:nodeDiameter,0:nodeDiameter]=-1
                 occupiedPlane[0:nodeDiameter,0:nodeDiameter]=5
                 unoccupiedPlane[0:nodeDiameter,0:nodeDiameter]=230
-                #print frontierPlane
-                #print unoccupiedPlane
                 frontierTestArray = nodePlane == frontierPlane
                 unoccupiedTestArray = nodePlane > unoccupiedPlane
                 occupiedTestArray = nodePlane == occupiedPlane
-                    
-                #print testArray
-                #print "....................."
-                #print secondTestArray
-                #print testArray.all()
-                #print secondTestArray.all()
-                #blank = input("press enter: ")
-                #if nodePlane.all()>0:
-                #    print "node plane: ",nodePlane
-                #    blank = input("press enter: ") 
                 newNode=Node((xpoint,ypoint),i,j)
                 if unoccupiedTestArray.all():
                 #all pixels are white:
@@ -179,7 +140,6 @@ class Grid(object):
                     newNode.walkable=True
                     newNode.isFrontier = True
                     #print nodePlane
-                    
                 #newNode.setWalkable(nodePlane)
                 grid[j][i]= newNode
         self.grid=grid
@@ -198,12 +158,15 @@ class Pathfinding(object):
         #startNode.sethCost(getDistance(startNode,targetNode))
         startNode.sethCost(150)#albitrarily large number
         startNode.setgCost(0)
+        #startNode.walkable=True
         self.startNode=startNode
         self.targetNode=targetNode
         openSet=[startNode]
         closedSet=[]
         d=0
         while(len(openSet)>0):
+            print "node ",d
+            d=d+1
             currentNode = openSet[0]
             for i in range(len(openSet)):
                 if(openSet[i].getfCost()<currentNode.getfCost() or (openSet[i].getfCost() == currentNode.getfCost() and openSet[i].hcost < currentNode.hcost)):
@@ -212,10 +175,9 @@ class Pathfinding(object):
             openSet.remove(currentNode)
             closedSet.append(currentNode)
             if (currentNode.isFrontier):
-                self.path = retracePath(startNode,currentNode)
+                #self.path = retracePath(startNode,currentNode)
                 self.pathExist=True
-                self.targetNode=currentNode
-                print "final frontier: ",currentNode.getX(),", ",currentNode.getY()
+                self.targetNode=currentNode.parent
                 return
             for nodeNeighbor in getNeighbors(currentNode,grid,startNode,targetNode):
                 if ((not nodeNeighbor.walkable) or (nodeNeighbor in closedSet)):

@@ -46,12 +46,6 @@ def getNeighbors(node,grid,startNode,targetNode):
                 nodeNeighbor = grid.grid[checkY][checkX]
                 #nodeNeighbor.setgCost(getDistance(nodeNeighbor,node)) # cost to this guy.
                 nodeNeighbor.sethCost(getDistance(nodeNeighbor,targetNode))
-                #localCost = getDistance(nodeNeighbor,node)
-                # how to check second neighbor?
-                #if localCost>14:
-                #    nodeNeighbor.setDiagonal(True)
-                #else:
-                #    nodeNeighbor.setDiagonal(False)
                 neighbors.append(nodeNeighbor)
     #check second neighbors
     for node in neighbors:
@@ -145,8 +139,30 @@ class Grid(object):
                 y1 = ypoint-nodeRadius
                 y2 = ypoint+nodeRadius
                 nodePlane = image[y1:y2,x1:x2]
+                frontierPlane = numpy.zeros((nodeDiameter,nodeDiameter))
+                unoccupiedPlane = numpy.zeros((nodeDiameter,nodeDiameter))
+                occupiedPlane = numpy.zeros((nodeDiameter,nodeDiameter))
+
+                frontierPlane[0:nodeDiameter,0:nodeDiameter]=-1
+                occupiedPlane[0:nodeDiameter,0:nodeDiameter]=5
+                unoccupiedPlane[0:nodeDiameter,0:nodeDiameter]=230
+                frontierTestArray = nodePlane == frontierPlane
+                unoccupiedTestArray = nodePlane > unoccupiedPlane
+                occupiedTestArray = nodePlane == occupiedPlane
                 newNode=Node((xpoint,ypoint),i,j)
-                newNode.setWalkable(nodePlane)
+                if unoccupiedTestArray.all():
+                #all pixels are white:
+                    newNode.walkable=True
+                elif (occupiedTestArray.any()):
+                # if any are occupied:
+                    newNode.walkable=False
+                elif(frontierTestArray.all()):
+                #if all equal the unexplored plain, not frontier:
+                    newNode.walkable=False
+                else:
+                # else, there is no occupied, only white and gray:
+                    newNode.walkable=True
+                #newNode.setWalkable(nodePlane)
                 grid[j][i]= newNode
         self.grid=grid
         self.worldSize = gridWorldSize

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #tf
 from numpy.linalg import inv
-from AStarPathFinder import *
+from FrontierFinder import *
 from geometry_msgs.msg import Pose
 
 def mapToPGM(bottom,resolution,point,worldSize):
