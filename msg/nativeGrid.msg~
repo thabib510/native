@@ -1,3 +1,4 @@
 # This contains the eroded/dilated map and info
-int8[][] mapArray
+# array1d[] is basically a list-of-lists ( [[...], [...], .... [...]] )
+array1d[] mapArray
 nav_msgs/MapMetaData info

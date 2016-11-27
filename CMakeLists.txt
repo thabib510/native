@@ -37,18 +37,25 @@ find_package(catkin REQUIRED)
          std_msgs
          message_generation
          geometry_msgs
+         nav_msgs
+         sensor_msgs
+         cv_bridge
+         image_transport
 )
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
    A_Path.msg
    path.msg
+   array1d.msg
+   nativeGrid.msg
  )
 
  generate_messages(
    DEPENDENCIES
    std_msgs
    geometry_msgs 
+   nav_msgs
 )
 
 
@@ -129,7 +136,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
 # add_library(native
@@ -142,16 +152,18 @@ catkin_package(
 # add_dependencies(native ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(native_node src/native_node.cpp)
+ add_executable(hog_haar_person_detection nodes/Dynamic_OA/hog_haar_person_detection.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(native_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(native_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(
+	hog_haar_person_detection 
+	${catkin_LIBRARIES}
+	${OpenCV_INCLUDE_DIRS}
+)
 
 #############
 ## Install ##

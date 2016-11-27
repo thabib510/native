@@ -28,15 +28,14 @@ pose_topic    = '/RosAria/pose_bl'
 #goal.pose.pose.position.x = 0.5
 #goal.pose.pose.position.y = 0.0
 #Goal.append(goal)
-#goal2 = Odometry()
-#goal2.pose.pose.position.x = 0.0
-#goal2.pose.pose.position.y = 0.0
-#Goal.append(goal2)
-
 
 # Helps mover() understand whether we're at the final goal of the path or we're at an interim goal of the path
 cur_index = 0
+<<<<<<< HEAD
+final_index = len(Goal) - 1
+=======
 final_index = 0
+>>>>>>> add011a9860c0fb0beacd914a9fc803a9c0e72f0
 goalAchieved = False
 
 # These two variables help mover() understand whether the robot has twisted/advanced far enough to reach the current goal
