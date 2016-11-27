@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launch>
+  <param name="face_cascade_name" value="$(find native)/config/haarcascade_frontalface_alt.xml" />
+  <param name="image_topic"       value="/camera/rgb/image_raw" />
+
+  <node pkg="native" type="hog_haar_person_detection" name="hog_haar_person_detection" />
+
+  <group ns="Dynamic_OA">
+    <node pkg="native" type="pedestrian_detection.py" name="pedestrian_detection" output="screen"/>
+    <node pkg="native" type="face_detection.py"       name="face_detection"       output="screen"/>
+  </group>
+</launch>
+
