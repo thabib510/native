@@ -44,7 +44,7 @@ def setVariable(obstacleFlg):
 def OA_Handler():
     print "In OA_Handler"
     rospy.init_node('OA_Handler')
-    sonar_sub = rospy.Subscriber(Sonar_topic, Bool, setVariable)
+    sonar_sub = rospy.Subscriber(Sonar_topic, Bool, setVariable, queue_size = 1)
     rospy.spin() # To keep this node alive
 
 

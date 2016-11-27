@@ -41,7 +41,7 @@ def callback(data):
 
 def main():
   rospy.init_node('static_OA')
-  sonar_sub = rospy.Subscriber('/RosAria/sonar', PointCloud, callback)
+  sonar_sub = rospy.Subscriber('/RosAria/sonar', PointCloud, callback, queue_size = 1)
   rospy.spin()
 
 

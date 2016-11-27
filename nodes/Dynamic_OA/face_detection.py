@@ -17,14 +17,13 @@ def callback_face(data):
 	obstacle = False
 	if(data.data!= 0): 
 		count = count+1
-		if (count==20): # at a rate of 10 frames per second
+		if (count >= 15): # at a rate of 10 frames per second
 			obstacle = True
-			count = 0
 			print '\t Face detected !!!\n'
 	else:
 		count = 0
 #		print 'No face detected...'
-	face_pub = rospy.Publisher('face_found', Bool, queue_size = 1);
+	face_pub = rospy.Publisher('face_found', Bool, queue_size = 1)
 	face_pub.publish(obstacle)
 
 def det_face():
