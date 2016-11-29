@@ -52,7 +52,7 @@ angle_to_twist = 0.0
 angle_tolerance = 1.5
 #interrupt flag:
 interrupt = False
-oa_count = 0
+oa_count = 10
 
 
 
@@ -337,15 +337,13 @@ def set_Goal(the_goal):
 def set_OA(oa):
     global interrupt, oa_count
     interrupt = oa.data
-    if(not interrupt):
-        oa_count = oa_count + 1
     if(interrupt):
         oa_count = 0
     elif(not interrupt and oa_count == 1):
         #clear goal list
         GoalCompleted()
     else:
-        oa_count = 0
+       oa_count = oa_count + 1
 
 
 def motion_controller():
