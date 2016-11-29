@@ -11,6 +11,8 @@ from AStarPathFinder import *
 from transform_methods import *
 from native.msg import path as pathMsg
 #---------------------------------------------------------------------------------------------------
+# empty message:
+EmptyMessage = pathMsg()
 # drawing methods:
 def drawPath(path,image,radius,gridWorldSize):
     for node in path.path:
@@ -37,8 +39,14 @@ def paintNode(node,radius, image):
     return image
 #---------------------------------------------------------------------------------------------------
 def PathPublisher(msg):
+    global EmptyMessage
     pub = rospy.Publisher('Path', pathMsg, queue_size = 10)
+    pub.publish(EmptyMessage)
+    rate = rospy.Rate(2)
+    rate.sleep()
     pub.publish(msg)
+    
+    #pub.publish(msg)
     #rate = rospy.Rate(2)
     #while not rospy.is_shutdown():
         #pub.publish(msg)

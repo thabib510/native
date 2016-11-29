@@ -45,10 +45,10 @@ def callback2(data):
         print "more dilating.."
         for i in range(3):
             map_array =dilate(map_array)
-        map_array[map_array==-1]=180
-        pyplot.imshow(map_array, pyplot.cm.gray)
-        pyplot.show()  
-        map_array[map_array==180]=-1
+        #map_array[map_array==-1]=180
+        #pyplot.imshow(map_array, pyplot.cm.gray)
+        #pyplot.show()  
+        #map_array[map_array==180]=-1
         #publishMapArray(map_array)
         #rospy.loginfo("Goal pose frame: "+goal.header.frame_id)
         bottom = (map_conversion[3].x,map_conversion[3].y)
