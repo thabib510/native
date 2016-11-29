@@ -17,7 +17,7 @@ def callback_face(data):
 	obstacle = False
 	if(data.data!= 0): 
 		count = count+1
-		if (count >= 15): # at a rate of 10 frames per second
+		if (count >= 5): # at a rate of 10 frames per second
 			obstacle = True
 			print '\t Face detected !!!\n'
 	else:

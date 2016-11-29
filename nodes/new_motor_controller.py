@@ -25,6 +25,7 @@ from std_msgs.msg import String
 cmd_vel_topic = '/RosAria/cmd_vel'
 pose_topic    = '/RosAria/pose_bl'
 Astar_topic   = 'Path'
+OA_topic = 'OAH'
 
 # Global variable that will hold the list of goals sent from A* (initiallized with a (0,0,0) pose)
 Goal = [Pose()]
@@ -51,7 +52,7 @@ angle_to_twist = 0.0
 angle_tolerance = 1.5
 #interrupt flag:
 interrupt = False
-
+oa_count = 0
 
 
 
@@ -249,14 +250,11 @@ def mover(odom):
     pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
     
     if interrupt:
-        twist = Twist()
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
-        pub.publish(twist)
+        goal.poses = []
         return
         
     goal = Goal # Create a temporary copy of current goal
-    if len(goal.poses) <1:
+    if goal.poses == None:
         print "emtpy list.."
         return
     if new_goal_setted: # If a new goal has been set, then make sure that goalAchieved is set to False
@@ -336,8 +334,18 @@ def set_Goal(the_goal):
     
     return
 
-
-
+def set_OA(oa):
+    global interrupt, oa_count
+    interrupt = oa.data
+    if(not interrupt):
+        oa_count = oa_count + 1
+    if(interrupt):
+        oa_count = 0
+    elif(not interrupt and oa_count == 1):
+        #clear goal list
+        GoalCompleted()
+    else:
+        oa_count = 0
 
 
 def motion_controller():
@@ -349,6 +357,7 @@ def motion_controller():
     GoalCompleted() #ready to take goals
     goal_sub = rospy.Subscriber(Astar_topic, path, set_Goal)
     pose_sub = rospy.Subscriber(pose_topic, Odometry, mover)
+    oa_sub = rospy.Subscriber(OA_topic, Bool, set_OA, queue_size = 1)
     rospy.spin() # To keep this node alive
 
 

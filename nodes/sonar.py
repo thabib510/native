@@ -14,7 +14,7 @@ tempa = False
 def callback(data):
   global obstacle, tempa, threshold
   temp = 0
-  pub = rospy.Publisher('static_OA', Bool, queue_size = 1);
+  pub = rospy.Publisher('static_OA', Bool, queue_size = 1)
   if not tempa:
     tempa = True
 

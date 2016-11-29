@@ -17,9 +17,8 @@ def callback_face(data):
 	obstacle = False
 	if(data.data!= 0): 
 		count = count+1
-		if (count==15):
+		if (count>=5):
 			obstacle = True
-			count = 0
 			print '\tPedestrian detected!!!\n'
 
 	else:
