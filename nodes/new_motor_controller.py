@@ -211,15 +211,9 @@ def forward(pub, cur_goal_odom, current_odom):
 #----------------------------------------------------
 # INITIALIZE MODULE:
 def moveToMap():
-    global interrupt
     #rate = rospy.Rate(10)
     pub = rospy.Publisher(cmd_vel_topic, Twist, queue_size=10)
     twist = Twist()
-    if interrupt:
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
-        pub.publish(twist)
-        return
     twist.linear.x = 0.0
     twist.angular.z= 0.0 
     pub.publish(twist)
